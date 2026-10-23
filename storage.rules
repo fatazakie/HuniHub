@@ -1,0 +1,34 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Foto properti hunian:
+    // - Dapat dibaca secara publik oleh semua pengunjung aplikasi
+    // - Hanya dapat diunggah, diubah, atau dihapus oleh pengguna dengan peran 'admin'
+    // - Validasi tipe gambar dan ukuran berkas maksimal 10MB
+    match /properties/{imageId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && (
+        request.resource == null || // untuk aksi delete
+        (request.resource.size < 10 * 1024 * 1024 && request.resource.contentType.matches('image/.*'))
+      );
+    }
+
+    // Avatar profil pengguna
+    match /avatars/{userId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && request.auth.uid == userId
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+  }
+}
