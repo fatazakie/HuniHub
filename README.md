@@ -1,194 +1,228 @@
-# HuniHub - Aplikasi Booking Hunian Mobile & Web
+# HuniHub — Aplikasi Booking Hunian Mobile & Web
 
-HuniHub adalah aplikasi pemesanan (*booking*) hunian bergaya hotel (kamar, kos, villa, dan apartemen) yang dibangun menggunakan **React Native (Expo SDK 57)** dan **Firebase Modular (v9+)**. Aplikasi ini mendukung dua peran pengguna: **Guest (Tamu)** dan **Administrator**, dengan antarmuka berbahasa Indonesia dan mata uang Rupiah (IDR).
+HuniHub adalah aplikasi pemesanan hunian bergaya hotel yang mencakup kamar, kos, villa, dan apartemen. Aplikasi dibangun menggunakan **React Native dengan Expo SDK 57** dan **Firebase Modular SDK**. HuniHub menyediakan antarmuka berbahasa Indonesia, menggunakan mata uang Rupiah (IDR), dan mendukung dua peran pengguna: **Guest** dan **Administrator**.
 
----
+## Daftar Isi
 
-## 📱 Daftar Fitur Utama
+- [Fitur Utama](#fitur-utama)
+- [Teknologi](#teknologi)
+- [Struktur Folder](#struktur-folder)
+- [Persiapan Firebase](#persiapan-firebase)
+- [Konfigurasi Environment](#konfigurasi-environment)
+- [Menjalankan Aplikasi](#menjalankan-aplikasi)
+- [Mengisi Data Demo](#mengisi-data-demo)
+- [Membuat Akun Administrator](#membuat-akun-administrator)
+- [Deploy Security Rules](#deploy-security-rules)
+- [Alur Pemesanan](#alur-pemesanan)
 
-### 1. Autentikasi & Akun
-- **Onboarding Interaktif**: 3 slide pengenalan aplikasi dengan penyimpanan status ke `AsyncStorage` (hanya tampil pada instalasi pertama).
-- **Registrasi Akun Tamu**: Pendaftaran (Nama, Email, No HP/WhatsApp, Password) yang otomatis menetapkan peran `role: "guest"`.
-- **Masuk & Lupa Kata Sandi**: Pesan error Firebase diterjemahkan ke bahasa Indonesia yang ramah pengguna.
-- **Navigasi Berbasis Peran**: Pengalihan rute otomatis ke antarmuka Guest atau Admin setelah login.
-- **Sesi Persisten**: Menggunakan `AsyncStorage` (Android) dan *Browser Storage* (Web) agar sesi login tidak hilang saat aplikasi ditutup.
+## Fitur Utama
 
-### 2. Fitur Tamu (Guest)
-- **Beranda (Home)**: Sapaan nama tamu, bilah pencarian cepat, filter kategori hunian (Semua, Villa, Apartemen, Kamar, Kos), slider rekomendasi rating terbaik, dan hunian populer.
-- **Eksplorasi & Filter (Explore)**: Pencarian nama/kota/alamat, filter kota populer, modal filter tipe hunian, fasilitas checklist, serta pengurutan (Terbaru, Rating Tertinggi, Harga Termurah, Harga Termahal).
-- **Detail Hunian (Property Detail)**: Galeri foto swipe dengan indikator dot & counter, fasilitas berikon, lokasi, rating, ulasan, kebijakan menginap, serta *sticky bottom action bar* harga & tombol pesan.
-- **Formulir Pemesanan (Booking Form)**:
-  - Kalender interaktif (`react-native-calendars`) yang **menandai merah tanggal yang sudah terisi**.
-  - **Pencegahan Bentrok Tanggal**: Sistem secara otomatis menolak pemilihan rentang tanggal yang bertabrakan dengan pesanan `pending` atau `confirmed`.
-  - Kalkulasi jumlah malam dan total harga otomatis (`malam × harga per malam`).
-  - Pengatur jumlah tamu (stepper) dan input catatan khusus.
-- **Ringkasan Pesanan (Booking Summary)**: Rincian lengkap menginap dan data pemesan. Disimpan dengan status `pending` menggunakan transaksi atomik Firestore (`runTransaction`).
-- **Pesanan Saya (My Bookings)**: Tab filter status (**Semua**, **Menunggu**, **Dikonfirmasi**, **Selesai**, **Dibatalkan**). Tamu dapat membatalkan pesanan yang masih berstatus `pending`.
-- **Detail Reservasi (Booking Detail)**: Kode booking unik, rincian biaya, serta instruksi check-in di lokasi.
-- **Favorit (Favorites)**: Penandaan hunian favorit dengan tombol hati (sinkron di kartu dan detail).
-- **Profil Tamu (Profile)**: Edit nama & no HP WhatsApp, informasi aplikasi, dan logout berdialog konfirmasi.
+### Autentikasi dan Akun
 
-### 3. Fitur Administrator
-- **Dashboard Statistik**: Metrik total pendapatan (dari booking `confirmed` dan `completed`), total pemesanan, jumlah hunian aktif, okupansi berjalan, dan 5 reservasi terbaru.
-- **Kelola Hunian (Property List)**: Daftar hunian, toggle switch ketersediaan langsung (*Tersedia* vs *Penuh*), tombol edit, dan tombol hapus.
-- **Formulir Hunian (Property Form)**: Tambah & ubah data hunian, pemilihan banyak foto dari galeri HP via `expo-image-picker` & upload ke Firebase Storage, checklist fasilitas lengkap, dan validasi data.
-- **Kelola Reservasi (Booking List)**: Filter status dan aksi operasional admin:
-  - **Setujui Pesanan** (`confirmed`)
-  - **Tolak Pesanan** (`cancelled`) — tanggal otomatis dibuka kembali untuk tamu lain
-  - **Tandai Selesai** (`completed`)
-- **Detail Reservasi Admin**: Rincian pemesan, kontak WhatsApp tamu, catatan tamu, dan tindakan operasional.
-- **Dialog Konfirmasi**: Seluruh aksi penting atau destruktif dilindungi modal konfirmasi (`ConfirmDialog`).
+- Onboarding interaktif tiga slide; status disimpan menggunakan `AsyncStorage` dan onboarding hanya ditampilkan saat pertama kali aplikasi digunakan.
+- Registrasi akun tamu dengan nama, email, nomor HP/WhatsApp, dan kata sandi.
+- Pesan kesalahan autentikasi Firebase diterjemahkan ke bahasa Indonesia.
+- Navigasi berdasarkan peran pengguna setelah login.
+- Persistensi sesi menggunakan `AsyncStorage` pada Android dan browser storage pada Web.
 
----
+### Fitur Guest
 
-## 🛠️ Tech Stack & Arsitektur
+- **Beranda:** sapaan pengguna, pencarian cepat, filter kategori hunian, rekomendasi berdasarkan rating, dan hunian populer.
+- **Eksplorasi:** pencarian berdasarkan nama, kota, atau alamat; filter tipe hunian dan fasilitas; serta pengurutan berdasarkan terbaru, rating, dan harga.
+- **Detail hunian:** galeri foto, fasilitas, lokasi, rating, ulasan, kebijakan menginap, harga, dan tombol pemesanan.
+- **Form pemesanan:** kalender interaktif, pemilihan jumlah tamu, catatan khusus, serta kalkulasi jumlah malam dan total biaya otomatis.
+- **Pemeriksaan bentrok tanggal:** rentang tanggal yang bertabrakan dengan booking berstatus `pending` atau `confirmed` ditolak oleh aplikasi.
+- **Ringkasan pesanan:** rincian menginap dan data pemesan disimpan dengan status `pending` menggunakan transaksi Firestore (`runTransaction`).
+- **Pesanan saya:** filter status Semua, Menunggu, Dikonfirmasi, Selesai, dan Dibatalkan. Tamu dapat membatalkan pesanan yang masih `pending`.
+- **Detail reservasi:** kode booking, rincian biaya, dan instruksi check-in.
+- **Favorit:** tandai hunian favorit dan sinkronkan tampilannya pada kartu maupun halaman detail.
+- **Profil:** ubah nama dan nomor WhatsApp, lihat informasi aplikasi, dan logout dengan dialog konfirmasi.
 
-- **Framework**: React Native via Expo SDK 57 (JavaScript murni)
-- **Navigasi**: React Navigation 7 (`@react-navigation/native-stack` & `@react-navigation/bottom-tabs`)
-- **Backend & Database**: Firebase Modular JS SDK (`firebase/auth`, `firebase/firestore`, `firebase/storage`)
-- **Komponen UI**: `@expo/vector-icons`, `react-native-calendars`, `expo-image-picker`, `expo-font`
-- **Platform**: Android via **Expo Go** & Browser lokal (**Web Preview**)
-- **Arsitektur Service Layer**: Seluruh pemanggilan database diisolasi di `src/services/` (Screen tidak memanggil Firestore langsung).
+### Fitur Administrator
 
----
+- **Dashboard statistik:** total pendapatan dari booking `confirmed` dan `completed`, total pemesanan, jumlah hunian aktif, okupansi berjalan, dan lima reservasi terbaru.
+- **Kelola hunian:** lihat daftar hunian, ubah ketersediaan, edit data, dan hapus hunian.
+- **Form hunian:** tambah dan edit data, pilih beberapa foto dari galeri menggunakan `expo-image-picker`, unggah foto ke Firebase Storage, pilih fasilitas, dan validasi data.
+- **Kelola reservasi:** filter berdasarkan status, menyetujui pesanan (`confirmed`), menolak pesanan (`cancelled`), dan menandai pesanan selesai (`completed`).
+- **Detail reservasi admin:** lihat informasi pemesan, kontak WhatsApp, catatan tamu, dan tindakan operasional.
+- **Dialog konfirmasi:** aksi penting atau destruktif dilindungi dialog konfirmasi.
 
-## 📂 Struktur Folder
+## Teknologi
+
+| Bagian | Teknologi |
+| --- | --- |
+| Framework | React Native, Expo SDK 57 |
+| Bahasa | JavaScript |
+| Navigasi | React Navigation 7 |
+| Autentikasi | Firebase Authentication |
+| Database | Cloud Firestore |
+| Penyimpanan foto | Firebase Storage |
+| Penyimpanan sesi | AsyncStorage dan browser storage |
+| UI dan ikon | `@expo/vector-icons` |
+| Kalender | `react-native-calendars` |
+| Pemilihan gambar | `expo-image-picker` |
+| Arsitektur akses data | Service layer di `src/services/` |
+| Platform | Android melalui Expo Go dan Web |
+
+Pemanggilan database diorganisasi pada `src/services/` agar screen tidak mengakses Firestore secara langsung.
+
+## Struktur Folder
 
 ```text
 HuniHub/
-├── .env                  # Konfigurasi kredensial Firebase aktif
-├── .env.example          # Panduan variabel lingkungan
-├── app.json              # Konfigurasi Expo & Android adaptive icon
-├── firestore.rules       # Aturan keamanan database berbasis peran
-├── storage.rules         # Aturan keamanan penyimpanan foto
-├── package.json          # Dependensi & skrip
-├── README.md             # Dokumentasi lengkap proyek
+├── .env                  # Konfigurasi environment lokal (jangan commit)
+├── .env.example          # Contoh variabel environment
+├── app.json              # Konfigurasi Expo dan ikon Android
+├── firestore.rules       # Aturan keamanan Firestore
+├── storage.rules         # Aturan keamanan Firebase Storage
+├── package.json          # Dependensi dan scripts
+├── README.md
 ├── scripts/
-│   └── seedRunner.js     # Script CLI mandiri untuk mengisi data awal
+│   └── seedRunner.js     # Script untuk mengisi data awal
 └── src/
-    ├── components/       # Komponen reusable (Button, Input, PropertyCard, StatusBadge, dll.)
-    ├── context/          # AuthContext (manajemen sesi, role, dan onboarding)
-    ├── hooks/            # Custom hooks (useProperties, useBookings, useFavorites)
+    ├── components/       # Komponen UI reusable
+    ├── context/          # AuthContext, sesi, role, dan onboarding
+    ├── hooks/            # useProperties, useBookings, useFavorites
     ├── navigation/       # RootNavigator, AuthStack, GuestTabs, AdminTabs
     ├── screens/
     │   ├── auth/         # Onboarding, Login, Register, ForgotPassword
-    │   ├── guest/        # Home, Explore, Detail, Booking, Summary, MyBookings, Favorites, Profile
-    │   └── admin/        # Dashboard, PropertyList, PropertyForm, BookingList, AdminProfile
-    ├── services/         # firebase, authService, propertyService, bookingService, favoriteService, storageService
-    ├── theme/            # colors, spacing, typography
-    └── utils/            # formatRupiah, dateHelper, validators, firebaseErrors, seedData
+    │   ├── guest/        # Halaman untuk tamu
+    │   └── admin/        # Halaman untuk administrator
+    ├── services/         # Firebase, autentikasi, hunian, booking, favorit, storage
+    ├── theme/            # Warna, spacing, dan tipografi
+    └── utils/            # Formatter Rupiah, helper tanggal, validator, dan lainnya
 ```
 
----
+## Persiapan Firebase
 
-## ⚙️ Panduan Setup Firebase
+Sebelum menjalankan aplikasi, siapkan proyek Firebase:
 
-1. Buka [Firebase Console](https://console.firebase.google.com/) dan buat proyek baru (misal: `hunihub-app`).
-2. **Aktifkan Authentication**:
-   - Masuk ke menu **Build** > **Authentication** > **Sign-in method**.
-   - Aktifkan provider **Email/Password**.
-3. **Aktifkan Firestore Database**:
-   - Masuk ke menu **Build** > **Firestore Database** > klik **Create database**.
-   - Pilih mode awal (*test mode* atau *production mode*) dan lokasi terdekat (`asia-southeast2` Jakarta).
-4. **Aktifkan Cloud Storage**:
-   - Masuk ke menu **Build** > **Storage** > klik **Get started**.
-5. **Daftarkan Web App**:
-   - Di Project Overview, klik ikon Web `</>`.
-   - Beri nama aplikasi (misal: `HuniHub Web`).
-   - Salin kredensial ke berkas `.env` seperti berikut:
+1. Buka [Firebase Console](https://console.firebase.google.com/) dan buat proyek.
+2. Buka **Build → Authentication → Sign-in method**, lalu aktifkan **Email/Password**.
+3. Buka **Build → Firestore Database**, lalu buat database. Pilih lokasi yang sesuai dengan kebutuhan aplikasi; lokasi database tidak dapat diubah setelah dibuat.
+4. Aktifkan **Firebase Storage** dari menu Build.
+5. Dari halaman Project Overview, tambahkan aplikasi Web untuk memperoleh konfigurasi Firebase.
+6. Siapkan file `.env` di root proyek menggunakan variabel pada bagian berikut.
+
+## Konfigurasi Environment
+
+Buat file `.env` di direktori utama proyek. Contoh:
 
 ```env
-EXPO_PUBLIC_FIREBASE_API_KEY=AIzaSy...
+EXPO_PUBLIC_FIREBASE_API_KEY=your-firebase-api-key
 EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-EXPO_PUBLIC_FIREBASE_PROJECT_ID=your-project
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
 EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
-EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=1234567890
-EXPO_PUBLIC_FIREBASE_APP_ID=1:1234567890:web:abcdef...
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-messaging-sender-id
+EXPO_PUBLIC_FIREBASE_APP_ID=your-firebase-app-id
 ```
 
----
+Ganti seluruh nilai contoh dengan konfigurasi dari Firebase Console. Pastikan nama variabel sesuai dengan yang digunakan aplikasi.
 
-## 👑 Cara Membuat Akun Admin
+> **Catatan keamanan:** variabel dengan awalan `EXPO_PUBLIC_` akan tersedia di sisi aplikasi dan bukan tempat menyimpan rahasia server. Jangan pernah menaruh service account key atau kredensial privat di dalam aplikasi. Terapkan dan uji Firestore Rules serta Storage Rules sebelum aplikasi digunakan secara publik.
 
-Untuk alasan keamanan, formulir registrasi di aplikasi hanya membuat akun dengan peran `guest`. Akun Administrator dibuat melalui langkah manual berikut:
+## Menjalankan Aplikasi
 
-1. Buka aplikasi HuniHub dan lakukan pendaftaran akun baru melalui layar **Daftar Akun** (misal dengan email `admin@hunihub.id`).
-2. Buka [Firebase Console](https://console.firebase.google.com/) > pilih proyek Anda.
-3. Masuk ke menu **Firestore Database** > buka koleksi **`users`**.
-4. Cari dokumen pengguna yang sesuai dengan UID akun admin yang baru didaftarkan.
-5. Ubah nilai field **`role`** dari `"guest"` menjadi **`"admin"`**.
-6. Simpan perubahan. Saat pengguna masuk kembali ke aplikasi, **RootNavigator** akan otomatis membaca peran admin dan mengarahkan ke **Panel Admin (AdminTabs)**!
+Pastikan Node.js dan npm telah terpasang. Dari direktori proyek, jalankan:
 
----
-
-## 🛡️ Deploy Aturan Keamanan (Security Rules)
-
-### Firestore Rules
-1. Buka **Firestore Database** di Firebase Console > klik tab **Rules**.
-2. Salin seluruh isi dari berkas [`firestore.rules`](file:///d:/HuniHub/firestore.rules) pada repositori ini.
-3. Klik **Publish**.
-
-### Storage Rules
-1. Buka **Storage** di Firebase Console > klik tab **Rules**.
-2. Salin seluruh isi dari berkas [`storage.rules`](file:///d:/HuniHub/storage.rules) pada repositori ini.
-3. Klik **Publish**.
-
----
-
-## 🚀 Cara Menjalankan Aplikasi
-
-Pastikan dependensi telah terinstal:
 ```bash
 npm install
 ```
 
-### 1. Menjalankan di Browser (Pratinjau Lokal)
+### Web
+
+Jalankan aplikasi pada browser:
+
 ```bash
 npx expo start --web
 ```
-Aplikasi akan otomatis terbuka di browser lokal Anda pada `http://localhost:8081`.
 
-### 2. Menjalankan di Android via Expo Go
+Expo akan menampilkan alamat lokal di terminal, biasanya `http://localhost:8081`.
+
+### Android melalui Expo Go
+
+Jalankan:
+
 ```bash
 npx expo start
 ```
-Buka aplikasi **Expo Go** di HP Android Anda, lalu scan QR Code yang muncul di terminal (pastikan HP dan laptop berada dalam jaringan WiFi yang sama).
 
-### 3. Mengisi Data Demo (Seeding)
-Jika database Firestore Anda masih kosong, Anda dapat menjalankan seeder data 8 hunian unik di kota-kota Indonesia dengan perintah:
+Buka Expo Go pada perangkat Android, lalu pindai QR code yang ditampilkan di terminal. Pastikan perangkat dan komputer berada pada jaringan yang dapat saling terhubung.
+
+## Mengisi Data Demo
+
+Jika database Firestore belum memiliki data hunian, jalankan script seeder:
+
 ```bash
 npm run seed
 ```
-*(Catatan: Aplikasi juga memiliki auto-seeder bawaan di Beranda yang akan otomatis mengisi hunian demo jika koleksi terdeteksi kosong)*.
 
----
+Script ini dirancang untuk mengisi data demo delapan hunian di sejumlah kota Indonesia. Pastikan konfigurasi Firebase sudah benar sebelum menjalankannya.
 
-## 🔄 Alur Pemesanan (Booking Flow)
+Catatan: proyek juga memiliki mekanisme auto-seeder pada halaman Beranda ketika koleksi hunian terdeteksi kosong.
+
+## Membuat Akun Administrator
+
+Form registrasi aplikasi menetapkan peran awal sebagai `guest`. Untuk menyiapkan akun administrator pada lingkungan pengembangan:
+
+1. Daftarkan akun melalui aplikasi.
+2. Buka [Firebase Console](https://console.firebase.google.com/) dan pilih proyek yang digunakan.
+3. Buka **Firestore Database** dan koleksi `users`.
+4. Temukan dokumen pengguna yang sesuai dengan UID akun tersebut.
+5. Ubah field `role` dari `guest` menjadi `admin`.
+6. Simpan perubahan, lalu login kembali untuk memuat navigasi administrator.
+
+**Penting:** perubahan role langsung dari Console hanya boleh dilakukan oleh pihak yang berwenang. Pastikan Firestore Rules benar-benar membatasi akses berdasarkan identitas dan role yang tervalidasi. Jangan mengandalkan penyembunyian menu di antarmuka sebagai mekanisme keamanan.
+
+## Deploy Security Rules
+
+Aturan keamanan tersedia pada file berikut di repositori:
+
+- [`firestore.rules`](./firestore.rules) — aturan akses Cloud Firestore.
+- [`storage.rules`](./storage.rules) — aturan akses Firebase Storage.
+
+Untuk menerapkannya:
+
+1. Buka Firebase Console dan pilih proyek.
+2. Untuk Firestore, buka **Firestore Database → Rules**, salin isi `firestore.rules`, lalu pilih **Publish**.
+3. Untuk Storage, buka **Storage → Rules**, salin isi `storage.rules`, lalu pilih **Publish**.
+4. Uji akses dengan akun Guest dan Administrator untuk memastikan setiap role hanya dapat melakukan tindakan yang diizinkan.
+
+Jangan menggunakan aturan terbuka untuk deployment produksi. Periksa aturan secara menyeluruh sebelum aplikasi dipublikasikan.
+
+## Alur Pemesanan
 
 ```text
-[ Beranda / Eksplorasi ]
-         │
-         ▼
-[ Detail Hunian ] ──> Lihat fasilitas, foto, ulasan & harga
-         │
-         ▼
-[ Form Pemesanan ] ──> Pilih rentang tanggal di Kalender
-                       (Sistem otomatis mengecek bentrok tanggal)
-         │
-         ▼
-[ Ringkasan Pesanan ] ──> Rincian biaya & data pemesan
-         │
-         ▼ (Simpan dengan transaksi atomik)
-[ Pesanan Berstatus Pending ] ──> Masuk ke tab "Menunggu"
-         │
-         ├─────────────────────────────────────────┐
-         ▼                                         ▼
-   [ Tamu Membatalkan ]                   [ Admin Menyetujui ]
-(Ubah status ke cancelled)             (Ubah status ke confirmed)
-                                                   │
-                                                   ▼
-                                         [ Selesai Menginap ]
-                                      (Ubah status ke completed)
+Beranda / Eksplorasi
+        |
+        v
+Detail Hunian
+        |
+        v
+Form Pemesanan
+(Pilih tanggal dan jumlah tamu;
+sistem memeriksa bentrok tanggal)
+        |
+        v
+Ringkasan Pesanan
+        |
+        v
+Pesanan berstatus pending
+        |
+        +-----------------------------+
+        |                             |
+        v                             v
+Tamu membatalkan               Admin menyetujui
+        |                             |
+        v                             v
+cancelled                      confirmed
+                                      |
+                                      v
+                                  completed
 ```
-#   H u n i H u b  
- 
+
+## Catatan
+
+- Status booking yang digunakan dalam alur aplikasi mencakup `pending`, `confirmed`, `cancelled`, dan `completed`.
+- Pemeriksaan bentrok tanggal di sisi aplikasi membantu pengalaman pengguna, tetapi tidak dengan sendirinya menjamin tidak ada dua permintaan bersamaan yang memesan tanggal sama. Untuk penggunaan produksi, pastikan proses validasi dan perubahan booking dirancang agar konsisten terhadap permintaan bersamaan, idealnya melalui mekanisme backend/transaksi yang sesuai.
+- Sesuaikan dokumentasi ini jika nama script, struktur folder, konfigurasi, atau perilaku implementasi berubah.
